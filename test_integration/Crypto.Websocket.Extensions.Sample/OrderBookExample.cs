@@ -27,6 +27,10 @@ using Crypto.Websocket.Extensions.Core.OrderBooks;
 using Crypto.Websocket.Extensions.Core.OrderBooks.Models;
 using Crypto.Websocket.Extensions.Core.OrderBooks.Sources;
 using Crypto.Websocket.Extensions.OrderBooks.Sources;
+using Ftx.Client.Websocket;
+using Ftx.Client.Websocket.Client;
+using Ftx.Client.Websocket.Requests;
+using Ftx.Client.Websocket.Websockets;
 using Serilog;
 using Channel = Bitstamp.Client.Websocket.Channels.Channel;
 
@@ -44,6 +48,7 @@ namespace Crypto.Websocket.Extensions.Sample
             var binanceOb = await StartBinance("BTCUSDT", optimized, l2OrderBook);
             var coinbaseOb = await StartCoinbase("BTC-USD", optimized, l2OrderBook);
             var bitstampOb = await StartBitstamp("BTCUSD", optimized, l2OrderBook);
+            var ftxOb = await StartFtx("BTC-PERP", optimized, l2OrderBook);
 
             Log.Information("Waiting for price change...");
 
@@ -53,21 +58,24 @@ namespace Crypto.Websocket.Extensions.Sample
                     bitfinexOb.BidAskUpdatedStream,
                     binanceOb.BidAskUpdatedStream,
                     coinbaseOb.BidAskUpdatedStream,
-                    bitstampOb.BidAskUpdatedStream
+                    bitstampOb.BidAskUpdatedStream,
+                    ftxOb.BidAskUpdatedStream
                 })
                 .Subscribe(x => HandleQuoteChanged(x, true));
         }
 
         public static async Task RunOnlyOne(bool displayFullOb)
         {
-            var optimized = true;
+            var optimized = false;
             var l2OrderBook = false;
 
-            var ob = await StartBitmex("XBTUSD", optimized, l2OrderBook);
+            //var ob = await StartBitmex("XBTUSD", optimized, l2OrderBook);
             //var ob = await StartBinance("BTCUSDT", optimized, l2OrderBook);
             //var ob = await StartBitfinex("BTCUSD", optimized, l2OrderBook);
             //var ob = await StartCoinbase("BTC-USD", optimized, l2OrderBook);
             //var ob = await StartBitstamp("BTCUSD", optimized, l2OrderBook);
+            
+            var ob = await StartFtx("BTC-PERP", optimized, l2OrderBook);
 
             Log.Information("Waiting for price change...");
 
@@ -253,6 +261,30 @@ namespace Crypto.Websocket.Extensions.Sample
                 new[] { pair },
                 ChannelSubscriptionType.Level2
             ));
+
+            return orderBook;
+        }
+        
+        private static async Task<ICryptoOrderBook> StartFtx(string pair, bool optimized, bool l2Optimized)
+        {
+            var url = FtxValues.ApiWebsocketUrl;
+            var communicator = new FtxWebsocketCommunicator(url) { Name = "Ftx" };
+            var client = new FtxWebsocketClient(communicator);
+
+            var source = new FtxOrderBookSource(client);
+            var orderBook = l2Optimized ? 
+                new CryptoOrderBookL2(pair, source) : 
+                (ICryptoOrderBook)new CryptoOrderBook(pair, source);
+
+            if (optimized)
+            {
+                ConfigureOptimized(source, orderBook);
+            }
+
+            _ = communicator.Start();
+
+            // Send subscription request to order book data
+            client.Send(new BookSubscribeRequest(pair));
 
             return orderBook;
         }

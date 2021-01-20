@@ -19,6 +19,10 @@ namespace Crypto.Websocket.Extensions.Core.Trades.Models
         /// Unique trade id (provided by exchange)
         /// </summary>
         public string Id { get; set; }
+        /// <summary>
+        /// Trade is liquidation (FTX)
+        /// </summary>
+        public bool Liquidation { get; set; }
 
         /// <summary>
         /// Unique related order id from maker side - liquidity provider (provided only by few exchanges)

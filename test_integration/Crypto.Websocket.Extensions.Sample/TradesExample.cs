@@ -21,6 +21,10 @@ using Coinbase.Client.Websocket.Communicator;
 using Coinbase.Client.Websocket.Requests;
 using Crypto.Websocket.Extensions.Core.Trades.Sources;
 using Crypto.Websocket.Extensions.Trades.Sources;
+using Ftx.Client.Websocket;
+using Ftx.Client.Websocket.Client;
+using Ftx.Client.Websocket.Requests;
+using Ftx.Client.Websocket.Websockets;
 using Serilog;
 using Websocket.Client;
 using Channel = Bitstamp.Client.Websocket.Channels.Channel;
@@ -36,12 +40,14 @@ namespace Crypto.Websocket.Extensions.Sample
             var binance = GetBinance("BTCUSDT");
             var coinbase = GetCoinbase("BTC-USD");
             var bitstamp = GetBitstamp("BTCUSD");
+            var ftx = GetFtx("BTC-PERP");
 
             LogTrades(bitmex.Item1);
             LogTrades(bitfinex.Item1);
             LogTrades(binance.Item1);
             LogTrades(coinbase.Item1);
             LogTrades(bitstamp.Item1);
+            LogTrades(ftx.Item1);
 
             Log.Information("Waiting for trades...");
 
@@ -49,13 +55,14 @@ namespace Crypto.Websocket.Extensions.Sample
             //_ = bitfinex.Item2.Start();
             //_ = binance.Item2.Start();
             //_ = coinbase.Item2.Start();
-            _ = bitstamp.Item2.Start();
+            //_ = bitstamp.Item2.Start();
+            _ = ftx.Item2.Start();
         }
 
         private static void LogTrades(ITradeSource source)
         {
             source.TradesStream
-                .SelectMany(y => y, (trades, trade) => new { trade = trade, count = trades.Length })
+                .SelectMany(y => y, (trades, trade) => new {trade = trade, count = trades.Length})
                 .Subscribe(info =>
                 {
                     var x = info.trade;
@@ -64,18 +71,38 @@ namespace Crypto.Websocket.Extensions.Sample
                     var price = $"{x.Price:0.00}";
                     var amount = $"{x.Amount:0.00000000}/{x.AmountQuote:0}";
                     var time = $"{x.Timestamp:ss.ffffff} {x.ServerTimestamp:ss.ffffff}";
-                    Log.Information($"{time,20} | {source.ExchangeName,10} {x.PairClean,7} {side,6} " +
-                                    $" price: {price,10},  amount: {amount,20} " +
-                                    $"({group}) " +
-                                    $"maker: {x.MakerOrderId} " +
-                                    $"taker: {x.TakerOrderId}");
+                    var liquidation = $"{x.Liquidation}";
+
+                    if (x.Liquidation)
+                    {
+                        Log.Information($"{time,20} | {source.ExchangeName,10} {x.PairClean,7} {side,6} " +
+                                        $" price: {price,10},  amount: {amount,20} " +
+                                        $"({group}) " +
+                                        $"liquidation: {x.Liquidation} " +
+                                        $"maker: {x.MakerOrderId} " +
+                                        $"taker: {x.TakerOrderId}");
+                    }
                 });
         }
+
+        private static (ITradeSource, IWebsocketClient) GetFtx(string pair)
+        {
+            var url = FtxValues.ApiWebsocketUrl;
+            var communicator = new FtxWebsocketCommunicator(url) {Name = "Ftx"};
+            var client = new FtxWebsocketClient(communicator);
+
+            var source = new FtxTradeSource(client);
+
+            communicator.ReconnectionHappened.Subscribe(x => { client.Send(new TradesSubscribeRequest(pair)); });
+
+            return (source, communicator);
+        }
+
 
         private static (ITradeSource, IWebsocketClient) GetBitmex(string pair, bool isTestnet)
         {
             var url = isTestnet ? BitmexValues.ApiWebsocketTestnetUrl : BitmexValues.ApiWebsocketUrl;
-            var communicator = new BitmexWebsocketCommunicator(url) { Name = "Bitmex" };
+            var communicator = new BitmexWebsocketCommunicator(url) {Name = "Bitmex"};
             var client = new BitmexWebsocketClient(communicator);
 
             var source = new BitmexTradeSource(client);
@@ -91,7 +118,7 @@ namespace Crypto.Websocket.Extensions.Sample
         private static (ITradeSource, IWebsocketClient) GetBitfinex(string pair)
         {
             var url = BitfinexValues.ApiWebsocketUrl;
-            var communicator = new BitfinexWebsocketCommunicator(url) { Name = "Bitfinex" };
+            var communicator = new BitfinexWebsocketCommunicator(url) {Name = "Bitfinex"};
             var client = new BitfinexWebsocketClient(communicator);
 
             var source = new BitfinexTradeSource(client);
@@ -107,7 +134,7 @@ namespace Crypto.Websocket.Extensions.Sample
         private static (ITradeSource, IWebsocketClient) GetBinance(string pair)
         {
             var url = BinanceValues.ApiWebsocketUrl;
-            var communicator = new BinanceWebsocketCommunicator(url) { Name = "Binance" };
+            var communicator = new BinanceWebsocketCommunicator(url) {Name = "Binance"};
             var client = new BinanceWebsocketClient(communicator);
 
             var source = new BinanceTradeSource(client);
@@ -122,7 +149,7 @@ namespace Crypto.Websocket.Extensions.Sample
         private static (ITradeSource, IWebsocketClient) GetCoinbase(string pair)
         {
             var url = CoinbaseValues.ApiWebsocketUrl;
-            var communicator = new CoinbaseWebsocketCommunicator(url) { Name = "Coinbase" };
+            var communicator = new CoinbaseWebsocketCommunicator(url) {Name = "Coinbase"};
             var client = new CoinbaseWebsocketClient(communicator);
 
             var source = new CoinbaseTradeSource(client);
@@ -130,7 +157,7 @@ namespace Crypto.Websocket.Extensions.Sample
             communicator.ReconnectionHappened.Subscribe(x =>
             {
                 client.Send(new SubscribeRequest(
-                    new[] { pair },
+                    new[] {pair},
                     ChannelSubscriptionType.Matches
                 ));
             });
@@ -141,7 +168,7 @@ namespace Crypto.Websocket.Extensions.Sample
         private static (ITradeSource, IWebsocketClient) GetBitstamp(string pair)
         {
             var url = BitstampValues.ApiWebsocketUrl;
-            var communicator = new BitstampWebsocketCommunicator(url) { Name = "Bitstamp" };
+            var communicator = new BitstampWebsocketCommunicator(url) {Name = "Bitstamp"};
             var client = new BitstampWebsocketClient(communicator);
 
             var source = new BitstampTradeSource(client);

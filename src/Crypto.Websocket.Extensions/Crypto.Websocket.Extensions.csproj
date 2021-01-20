@@ -29,7 +29,7 @@
     <PackageReference Include="Bitfinex.Client.Websocket" Version="4.1.110" />
     <PackageReference Include="Bitmex.Client.Websocket" Version="3.1.78" />
     <PackageReference Include="Bitstamp.Client.Websocket" Version="1.0.2" />
-    <PackageReference Include="Coinbase.Client.Websocket" Version="2.0.16" />
+    <!--PackageReference Include="Coinbase.Client.Websocket" Version="2.0.16" /-->
     <PackageReference Include="LibLog" Version="5.0.8">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
@@ -37,6 +37,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\coinbase-client-websocket\src\Coinbase.Client.Websocket\Coinbase.Client.Websocket.csproj" />
+    <ProjectReference Include="..\..\..\ftx-client-websocket\src\Ftx.Client.Websocket\Ftx.Client.Websocket.csproj" />
     <ProjectReference Include="..\Crypto.Websocket.Extensions.Core\Crypto.Websocket.Extensions.Core.csproj" />
   </ItemGroup>
 </Project>

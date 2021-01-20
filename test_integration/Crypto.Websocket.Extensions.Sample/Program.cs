@@ -34,11 +34,11 @@ namespace Crypto.Websocket.Extensions.Sample
 
 
 
-            OrderBookExample.RunEverything().Wait();
+            //OrderBookExample.RunEverything().Wait();
             //OrderBookExample.RunOnlyOne(false).Wait();
             //OrderBookL3Example.RunOnlyOne().Wait();
 
-            //TradesExample.RunEverything().Wait();
+            TradesExample.RunEverything().Wait();
 
             //OrdersExample.RunEverything().Wait();
 
@@ -50,10 +50,7 @@ namespace Crypto.Websocket.Extensions.Sample
             Log.Debug("====================================");
             Log.CloseAndFlush();
         }
-
         
-
-
         private static void InitLogging()
         {
             var executingDir = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
