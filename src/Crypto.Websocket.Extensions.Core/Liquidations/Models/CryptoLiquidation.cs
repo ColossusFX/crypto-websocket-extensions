@@ -3,13 +3,13 @@ using System.Diagnostics;
 using Crypto.Websocket.Extensions.Core.Models;
 using Crypto.Websocket.Extensions.Core.Utils;
 
-namespace Crypto.Websocket.Extensions.Core.Trades.Models
+namespace Crypto.Websocket.Extensions.Core.Liquidations.Models
 {
     /// <summary>
     /// Executed trade info
     /// </summary>
     [DebuggerDisplay("Trade: {Id} - {Pair} - {Price} {Amount}/{AmountQuote}")]
-    public class CryptoTrade : CryptoChangeInfo
+    public class CryptoLiquidation : CryptoChangeInfo
     {
         private CryptoTradeSide _side;
         private double _amount;

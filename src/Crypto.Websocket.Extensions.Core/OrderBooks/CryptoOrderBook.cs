@@ -424,7 +424,7 @@ namespace Crypto.Websocket.Extensions.Core.OrderBooks
             var forThis = bulks
                 .Where(x => x != null)
                 .Where(x => IsCorrectType(x.OrderBookType))
-                //.Where(x => x.Levels.Any(y => TargetPair.Equals(y.Pair)))
+                //.Where(x => x.Levels.Any(y => TargetPair.Equals(y.Name)))
                 .ToArray();
             if (!forThis.Any())
             {

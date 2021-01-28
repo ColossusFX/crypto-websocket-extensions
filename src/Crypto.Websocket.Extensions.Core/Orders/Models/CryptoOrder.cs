@@ -35,12 +35,12 @@ namespace Crypto.Websocket.Extensions.Core.Orders.Models
         public string ClientId { get; set; }
 
         /// <summary>
-        /// Pair to which this order belongs
+        /// Name to which this order belongs
         /// </summary>
         public string Pair { get; set; }
 
         /// <summary>
-        /// Pair to which this order belongs (cleaned)
+        /// Name to which this order belongs (cleaned)
         /// </summary>
         public string PairClean => CryptoPairsHelper.Clean(Pair);
 

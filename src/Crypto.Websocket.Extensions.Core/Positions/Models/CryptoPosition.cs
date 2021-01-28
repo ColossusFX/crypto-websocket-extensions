@@ -16,12 +16,12 @@ namespace Crypto.Websocket.Extensions.Core.Positions.Models
         private double _amountQuote;
 
         /// <summary>
-        /// Pair to which this position belongs
+        /// Name to which this position belongs
         /// </summary>
         public string Pair { get; set; }
 
         /// <summary>
-        /// Pair to which this position belongs (cleaned)
+        /// Name to which this position belongs (cleaned)
         /// </summary>
         public string PairClean => CryptoPairsHelper.Clean(Pair);
 

@@ -54,7 +54,7 @@ namespace Crypto.Websocket.Extensions.Core.OrderBooks.Models
         public double? Amount { get; internal set; }
 
         /// <summary>
-        /// Pair to which this level or order belongs
+        /// Name to which this level or order belongs
         /// </summary>
         public string Pair { get; internal set; }
 
