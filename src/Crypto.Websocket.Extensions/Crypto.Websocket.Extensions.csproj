@@ -42,9 +42,4 @@
     <ProjectReference Include="..\..\..\ftx-client-websocket\src\Ftx.Client.Websocket\Ftx.Client.Websocket.csproj" />
     <ProjectReference Include="..\Crypto.Websocket.Extensions.Core\Crypto.Websocket.Extensions.Core.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Liquidations" />
-    <Folder Include="Margins" />
-  </ItemGroup>
 </Project>

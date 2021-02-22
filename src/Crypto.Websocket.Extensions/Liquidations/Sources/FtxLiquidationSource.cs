@@ -1,18 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Linq;
 using System.Reactive.Linq;
+using Crypto.Websocket.Extensions.Core.Liquidations.Models;
+using Crypto.Websocket.Extensions.Core.Liquidations.Sources;
 using Crypto.Websocket.Extensions.Core.Models;
-using Crypto.Websocket.Extensions.Core.Trades.Models;
-using Crypto.Websocket.Extensions.Core.Trades.Sources;
 using Crypto.Websocket.Extensions.Core.Validations;
 using Crypto.Websocket.Extensions.Logging;
 using Ftx.Client.Websocket.Client;
 using Ftx.Client.Websocket.Responses;
 using Ftx.Client.Websocket.Responses.Trades;
 
-namespace Crypto.Websocket.Extensions.Trades.Sources
+namespace Crypto.Websocket.Extensions.Liquidations.Sources
 {
-    public class FtxTradeSource : TradeSourceBase
+    public class FtxLiquidationSource : LiquidationSourceBase
     {
         private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
@@ -20,7 +20,7 @@ namespace Crypto.Websocket.Extensions.Trades.Sources
         private IDisposable _subscription;
 
         /// <inheritdoc />
-        public FtxTradeSource(FtxWebsocketClient client)
+        public FtxLiquidationSource(FtxWebsocketClient client)
         {
             ChangeClient(client);
         }
@@ -43,15 +43,16 @@ namespace Crypto.Websocket.Extensions.Trades.Sources
         private void Subscribe()
         {
             _subscription = _client.Streams.TradesStream
-                .Where(x => x != null)
-                .Subscribe(HandleTradeSafe);
+                .Where(x => x != null && x.Data.Any())
+                .Select(x => x.Data.Where(y => y.Liquidation))
+                .Subscribe(x => HandleLiquidationSafe(x.ToArray()));
         }
 
-        private void HandleTradeSafe(TradeResponse response)
+        private void HandleLiquidationSafe(Trade[] response)
         {
             try
             {
-                HandleTrade(response);
+                HandleLiquidation(response);
             }
             catch (Exception e)
             {
@@ -59,26 +60,19 @@ namespace Crypto.Websocket.Extensions.Trades.Sources
             }
         }
 
-        private void HandleTrade(TradeResponse response)
+        private void HandleLiquidation(Trade[] trades)
         {
-            TradesSubject.OnNext(ConvertTrades(response.Market, response.Data));
+            LiquidationSubject.OnNext(ConvertLiquidations(trades));
         }
 
-        private CryptoTrade[] ConvertTrades(string market, Trade[] trades)
+        private CryptoLiquidation[] ConvertLiquidations(Trade[] trades)
         {
-            var list = new List<CryptoTrade>();
-            foreach (var trade in trades)
-            {
-                list.Add(ConvertTrade(market, trade));
-            }
-
-            //return trades.Select(ConvertTrade(market)).ToArray();
-            return list.ToArray();
+            return trades.Select(ConvertLiquidation).ToArray();
         }
 
-        private CryptoTrade ConvertTrade(string symbol, Trade trade)
+        private CryptoLiquidation ConvertLiquidation(Trade trade)
         {
-            var data = new CryptoTrade()
+            var data = new CryptoLiquidation
             {
                 Amount = trade.Size,
                 AmountQuote = trade.Size * trade.Price,
@@ -86,7 +80,7 @@ namespace Crypto.Websocket.Extensions.Trades.Sources
                 Id = trade.Id.ToString(),
                 Price = trade.Price,
                 Timestamp = trade.Time.UtcDateTime,
-                Pair = symbol,
+                Pair = trade.Market,
                 ExchangeName = ExchangeName,
                 Liquidation = trade.Liquidation
             };
