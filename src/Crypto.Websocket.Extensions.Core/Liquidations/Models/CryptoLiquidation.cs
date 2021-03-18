@@ -87,6 +87,8 @@ namespace Crypto.Websocket.Extensions.Core.Liquidations.Models
             }
         }
 
+        public CryptoAction Action { get; set; }
+
         private double WithCorrectSign(double value)
         {
             if (_side == CryptoTradeSide.Undefined)

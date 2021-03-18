@@ -10,6 +10,7 @@ using Bitmex.Client.Websocket.Client;
 using Bitmex.Client.Websocket.Responses;
 using Bitmex.Client.Websocket.Responses.Liquidation;
 using Bitmex.Client.Websocket.Responses.Trades;
+using Crypto.Websocket.Extensions.Core.Liquidations;
 
 namespace Crypto.Websocket.Extensions.Liquidations.Sources
 {
@@ -85,16 +86,30 @@ namespace Crypto.Websocket.Extensions.Liquidations.Sources
                 Price = Convert.ToDouble(trade.Price ?? 0),
                 Timestamp = DateTime.Now,
                 Pair = trade.Symbol,
-                Liquidation = true
-
-                // ExchangeName = "bitmex",
-                // Id = trade.OrderID,
-                // Pair = trade.Symbol,
-                // Side = ConvertTradeSide(trade.Side ?? BitmexSide.Undefined),
-                // Price = trade.Price ?? 0,
-                // Amount = Convert.ToDouble(trade.leavesQty),
-                // AmountQuote = Convert.ToDouble(trade.leavesQty * trade.Price)
+                Liquidation = true,
+                Action = ConvertAction(action)
             };
+        }
+
+        private CryptoAction ConvertAction(BitmexAction side)
+        {
+            switch (side)
+            {
+                case BitmexAction.Undefined:
+                    break;
+                case BitmexAction.Partial:
+                    return CryptoAction.Partial;
+                case BitmexAction.Insert:
+                    return CryptoAction.Insert;
+                case BitmexAction.Update:
+                    return CryptoAction.Update;
+                case BitmexAction.Delete:
+                    return CryptoAction.Delete;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(side), side, null);
+            }
+
+            return CryptoAction.Undefined;
         }
 
         private CryptoTradeSide ConvertTradeSide(BitmexSide? side)
