@@ -6,6 +6,7 @@
         Perpetual,
         Prediction,
         Quarterly,
-        Weekly
+        Weekly,
+        Monthly
     }
 }

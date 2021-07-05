@@ -132,6 +132,8 @@ namespace Crypto.Websocket.Extensions.Markets.Sources
             {
                 case Ftx.Client.Websocket.Responses.Markets.Group.Daily:
                     return Group.Daily;
+                case Ftx.Client.Websocket.Responses.Markets.Group.Monthly:
+                    return Group.Monthly;
                 case Ftx.Client.Websocket.Responses.Markets.Group.Perpetual:
                     return Group.Perpetual;
                 case Ftx.Client.Websocket.Responses.Markets.Group.Prediction:
