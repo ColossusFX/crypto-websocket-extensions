@@ -7,22 +7,24 @@ using Crypto.Websocket.Extensions.Core.Utils;
 using Crypto.Websocket.Extensions.Core.Validations;
 using Crypto.Websocket.Extensions.Logging;
 using Ftx.Client.Websocket.Client;
+using Ftx.Client.Websocket.Responses;
+using Ftx.Client.Websocket.Responses.Fills;
 using Ftx.Client.Websocket.Responses.Orders;
 using Ftx.Client.Websocket.Responses.Trades;
-
 using OrderStatus = Ftx.Client.Websocket.Responses.Orders.OrderStatus;
 using OrderType = Ftx.Client.Websocket.Responses.Orders.OrderType;
 
 namespace Crypto.Websocket.Extensions.Orders.Sources
 {
     /// <inheritdoc />
-    public class FtxOrderSource: OrderSourceBase
+    public class FtxOrderSource : OrderSourceBase
     {
         private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
         private readonly CryptoOrderCollection _partiallyFilledOrders = new CryptoOrderCollection();
 
         private FtxWebsocketClient _client;
-        private IDisposable _subscription;
+        private IDisposable _ordersSubscription;
+        private IDisposable _fillsSubscription;
 
         /// <inheritdoc />
         public FtxOrderSource(FtxWebsocketClient client)
@@ -41,13 +43,15 @@ namespace Crypto.Websocket.Extensions.Orders.Sources
             CryptoValidations.ValidateInput(client, nameof(client));
 
             _client = client;
-            _subscription?.Dispose();
+            _ordersSubscription?.Dispose();
+            _fillsSubscription?.Dispose();
             Subscribe();
         }
 
         private void Subscribe()
         {
-            _subscription = _client.Streams.OrdersStream.Subscribe(x=>HandleOrdersSafe(x));
+            _ordersSubscription = _client.Streams.OrdersStream.Subscribe(HandleOrdersSafe);
+            _fillsSubscription = _client.Streams.FillsStream.Subscribe(HandleFillsSafe);
         }
 
         private void HandleOrdersSafe(OrdersResponse response)
@@ -55,6 +59,18 @@ namespace Crypto.Websocket.Extensions.Orders.Sources
             try
             {
                 HandleOrder(response);
+            }
+            catch (Exception e)
+            {
+                Log.ErrorException($"[Ftx] Failed to handle order info, error: '{response}'", e);
+            }
+        }
+
+        private void HandleFillsSafe(FillsResponse response)
+        {
+            try
+            {
+                HandleFill(response);
             }
             catch (Exception e)
             {
@@ -88,7 +104,20 @@ namespace Crypto.Websocket.Extensions.Orders.Sources
                     throw new ArgumentOutOfRangeException();
             }
         }
-        
+
+        private void HandleFill(FillsResponse response)
+        {
+            if (response == null)
+            {
+                // weird state, do nothing
+                return;
+            }
+
+            var orders = ConvertFill(response);
+
+            OrderUpdatedSubject.OnNext(orders);
+        }
+
         private CryptoOrder ConvertOrder(OrdersResponse order)
         {
             var id = order?.Data.Id.ToString() ?? "00000";
@@ -117,11 +146,50 @@ namespace Crypto.Websocket.Extensions.Orders.Sources
                 Price = price,
                 AmountFilled = order?.Data.FilledSize,
                 AmountOrig = amountOrig,
-                Side = ConvertSide(order?.Data.Side?? TradeSide.Undefined),
+                Side = ConvertSide(order.Data.Side),
                 OrderStatus = ConvertOrderStatus(order),
                 Type = ConvertOrderType(order?.Data.Type ?? OrderType.Undefined),
                 Created = ConvertToDatetime(order?.Data.CreatedAt ?? DateTimeOffset.UtcNow),
                 ClientId = clientId
+            };
+
+            if (currentStatus == CryptoOrderStatus.PartiallyFilled)
+            {
+                // save partially filled orders
+                _partiallyFilledOrders[newOrder.Id] = newOrder;
+            }
+
+            return newOrder;
+        }
+        
+        private CryptoOrder ConvertFill(FillsResponse order)
+        {
+            var id = order?.Data.Id.ToString() ?? "00000";
+            var clientId = order?.Data.OrderId;
+            var existingCurrent = ExistingOrders.ContainsKey(id) ? ExistingOrders[id] : null;
+            var existingPartial = _partiallyFilledOrders.ContainsKey(id) ? _partiallyFilledOrders[id] : null;
+            var existing = existingPartial ?? existingCurrent;
+
+            var price = Math.Abs(FirstNonZero(order?.Data.Price, existing?.Price) ?? 0);
+
+            var amount = Math.Abs(FirstNonZero(order?.Data.Size, existing?.AmountOrig) ?? 0);
+
+            var amountOrig = Math.Abs(order?.Data.Size ?? 0);
+
+            var currentStatus = CryptoOrderStatus.Executed;
+
+            var newOrder = new CryptoOrder
+            {
+                Id = id,
+                Pair = CryptoPairsHelper.Clean(order?.Data.Market),
+                Price = price,
+                AmountFilled = order?.Data.Size,
+                AmountOrig = amountOrig,
+                Side = ConvertSide(order.Data.Side),
+                OrderStatus = CryptoOrderStatus.Executed,
+                Type = ConvertOrderType(order?.Data.Type ?? OrderType.Undefined),
+                Created = ConvertToDatetime(DateTimeOffset.UtcNow),
+                ClientId = clientId.ToString()
             };
 
             if (currentStatus == CryptoOrderStatus.PartiallyFilled)
@@ -162,12 +230,13 @@ namespace Crypto.Websocket.Extensions.Orders.Sources
 
             return CryptoOrderType.Undefined;
         }
-        
+
         private DateTime ConvertToDatetime(DateTimeOffset dateTimeOffset)
         {
             var sourceTime = new DateTimeOffset(dateTimeOffset.DateTime, TimeSpan.Zero);
             return sourceTime.DateTime;
         }
+
         private CryptoOrderStatus ConvertOrderStatus(OrdersResponse order)
         {
             switch (order.Data.Status)
@@ -183,14 +252,15 @@ namespace Crypto.Websocket.Extensions.Orders.Sources
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+
             return CryptoOrderStatus.Undefined;
         }
-        
-        private CryptoOrderSide ConvertSide(TradeSide side)
-        {
-            if (side == TradeSide.Buy) return CryptoOrderSide.Bid;
 
-            if (side == TradeSide.Sell) return CryptoOrderSide.Ask;
+        private CryptoOrderSide ConvertSide(FtxSide side)
+        {
+            if (side == FtxSide.Buy) return CryptoOrderSide.Bid;
+
+            if (side == FtxSide.Sell) return CryptoOrderSide.Ask;
 
             return CryptoOrderSide.Undefined;
         }
