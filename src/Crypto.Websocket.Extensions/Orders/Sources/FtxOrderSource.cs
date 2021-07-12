@@ -10,9 +10,6 @@ using Ftx.Client.Websocket.Client;
 using Ftx.Client.Websocket.Responses;
 using Ftx.Client.Websocket.Responses.Fills;
 using Ftx.Client.Websocket.Responses.Orders;
-using Ftx.Client.Websocket.Responses.Trades;
-using OrderStatus = Ftx.Client.Websocket.Responses.Orders.OrderStatus;
-using OrderType = Ftx.Client.Websocket.Responses.Orders.OrderType;
 
 namespace Crypto.Websocket.Extensions.Orders.Sources
 {
