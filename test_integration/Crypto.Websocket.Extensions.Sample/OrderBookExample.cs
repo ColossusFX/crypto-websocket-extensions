@@ -31,6 +31,11 @@ using Ftx.Client.Websocket;
 using Ftx.Client.Websocket.Client;
 using Ftx.Client.Websocket.Requests;
 using Ftx.Client.Websocket.Websockets;
+using Huobi.Client.Websocket;
+using Huobi.Client.Websocket.Clients;
+using Huobi.Client.Websocket.Config;
+using Huobi.Client.Websocket.Messages.MarketData.MarketByPrice;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using Channel = Bitstamp.Client.Websocket.Channels.Channel;
 
@@ -49,6 +54,7 @@ namespace Crypto.Websocket.Extensions.Sample
             var coinbaseOb = await StartCoinbase("BTC-USD", optimized, l2OrderBook);
             var bitstampOb = await StartBitstamp("BTCUSD", optimized, l2OrderBook);
             var ftxOb = await StartFtx("BTC-PERP", optimized, l2OrderBook);
+            var huobiOb = await StartHuobi("btcusdt", optimized, l2OrderBook);
 
             Log.Information("Waiting for price change...");
 
@@ -60,6 +66,7 @@ namespace Crypto.Websocket.Extensions.Sample
                     coinbaseOb.BidAskUpdatedStream,
                     bitstampOb.BidAskUpdatedStream,
                     ftxOb.BidAskUpdatedStream
+                    huobiOb.BidAskUpdatedStream
                 })
                 .Subscribe(x => HandleQuoteChanged(x, true));
         }
@@ -74,8 +81,9 @@ namespace Crypto.Websocket.Extensions.Sample
             //var ob = await StartBitfinex("BTCUSD", optimized, l2OrderBook);
             //var ob = await StartCoinbase("BTC-USD", optimized, l2OrderBook);
             //var ob = await StartBitstamp("BTCUSD", optimized, l2OrderBook);
-            
+
             var ob = await StartFtx("BTC-PERP", optimized, l2OrderBook);
+            //var ob = await StartHuobi("btcusdt", optimized, l2OrderBook);}}
 
             Log.Information("Waiting for price change...");
 
@@ -137,19 +145,19 @@ namespace Crypto.Websocket.Extensions.Sample
                 var bidMsg =
                     bid != null ? $"#{i+1} " +
                                   $"{"p: " + (bid?.Price ?? 0).ToString("#.00##") + " a: " + (bid?.Amount ?? 0).ToString("0.00#")} " +
-                                  $"[{bid.AmountUpdatedCount}]" 
+                                  $"[{bid.AmountUpdatedCount}]"
                         : " ";
                 var askMsg =
                     ask != null ? $"#{i+1} " +
                                   $"{"p: " + (ask?.Price ?? 0).ToString("#.00##") + " a: " + (ask?.Amount ?? 0).ToString("0.00#")} " +
-                                  $"[{ask.AmountUpdatedCount}]" 
+                                  $"[{ask.AmountUpdatedCount}]"
                         : " ";
 
                 bidMsg = $"{bidMsg,50}";
                 askMsg = $"{askMsg,50}";
 
                 msg+= $"{Environment.NewLine}{bidMsg}  {askMsg}";
-                
+
             }
 
             Log.Information($"ORDER BOOK {ob.ExchangeName} {ob.TargetPairOriginal}: {msg}{Environment.NewLine}");
@@ -164,8 +172,8 @@ namespace Crypto.Websocket.Extensions.Sample
             var client = new BitmexWebsocketClient(communicator);
 
             var source = new BitmexOrderBookSource(client);
-            var orderBook = l2Optimized ? 
-                new CryptoOrderBookL2(pair, source) : 
+            var orderBook = l2Optimized ?
+                new CryptoOrderBookL2(pair, source) :
                 (ICryptoOrderBook)new CryptoOrderBook(pair, source);
 
             if (optimized)
@@ -188,8 +196,8 @@ namespace Crypto.Websocket.Extensions.Sample
             var client = new BitfinexWebsocketClient(communicator);
 
             var source = new BitfinexOrderBookSource(client);
-            var orderBook = l2Optimized ? 
-                new CryptoOrderBookL2(pair, source) : 
+            var orderBook = l2Optimized ?
+                new CryptoOrderBookL2(pair, source) :
                 (ICryptoOrderBook)new CryptoOrderBook(pair, source);
 
             if (optimized)
@@ -203,7 +211,7 @@ namespace Crypto.Websocket.Extensions.Sample
             client.Send(new ConfigurationRequest(ConfigurationFlag.Sequencing | ConfigurationFlag.Timestamp));
 
             // Send subscription request to order book data
-            client.Send(new Bitfinex.Client.Websocket.Requests.Subscriptions.BookSubscribeRequest(pair, 
+            client.Send(new Bitfinex.Client.Websocket.Requests.Subscriptions.BookSubscribeRequest(pair,
                 BitfinexPrecision.P0, BitfinexFrequency.Realtime, "100"));
 
             return orderBook;
@@ -220,8 +228,8 @@ namespace Crypto.Websocket.Extensions.Sample
             );
 
             var source = new BinanceOrderBookSource(client);
-            var orderBook = l2Optimized ? 
-                new CryptoOrderBookL2(pair, source) : 
+            var orderBook = l2Optimized ?
+                new CryptoOrderBookL2(pair, source) :
                 (ICryptoOrderBook)new CryptoOrderBook(pair, source);
 
             if (optimized)
@@ -245,8 +253,8 @@ namespace Crypto.Websocket.Extensions.Sample
             var client = new CoinbaseWebsocketClient(communicator);
 
             var source = new CoinbaseOrderBookSource(client);
-            var orderBook = l2Optimized ? 
-                new CryptoOrderBookL2(pair, source) : 
+            var orderBook = l2Optimized ?
+                new CryptoOrderBookL2(pair, source) :
                 (ICryptoOrderBook)new CryptoOrderBook(pair, source);
 
             if (optimized)
@@ -264,7 +272,7 @@ namespace Crypto.Websocket.Extensions.Sample
 
             return orderBook;
         }
-        
+
         private static async Task<ICryptoOrderBook> StartFtx(string pair, bool optimized, bool l2Optimized)
         {
             var url = FtxValues.ApiWebsocketUrl;
@@ -272,8 +280,8 @@ namespace Crypto.Websocket.Extensions.Sample
             var client = new FtxWebsocketClient(communicator);
 
             var source = new FtxOrderBookSource(client);
-            var orderBook = l2Optimized ? 
-                new CryptoOrderBookL2(pair, source) : 
+            var orderBook = l2Optimized ?
+                new CryptoOrderBookL2(pair, source) :
                 (ICryptoOrderBook)new CryptoOrderBook(pair, source);
 
             if (optimized)
@@ -296,8 +304,8 @@ namespace Crypto.Websocket.Extensions.Sample
             var client = new BitstampWebsocketClient(communicator);
 
             var source = new BitstampOrderBookSource(client);
-            var orderBook = l2Optimized ? 
-                new CryptoOrderBookL2(pair, source) : 
+            var orderBook = l2Optimized ?
+                new CryptoOrderBookL2(pair, source) :
                 (ICryptoOrderBook)new CryptoOrderBook(pair, source);
 
             if (optimized)
@@ -312,6 +320,38 @@ namespace Crypto.Websocket.Extensions.Sample
                 pair,
                 Channel.OrderBook
             ));
+
+            return orderBook;
+        }
+
+        private static async Task<ICryptoOrderBook> StartHuobi(string pair, bool optimized, bool l2Optimized)
+        {
+            var config = new HuobiMarketByPriceWebsocketClientConfig
+            {
+                Url = HuobiConstants.ApiMbpWebsocketUrl,
+                CommunicatorName = "Huobi"
+            };
+            var loggerFactory = new LoggerFactory().AddSerilog(Log.Logger);
+
+            var client = HuobiWebsocketClientsFactory.CreateMarketByPriceClient(config, loggerFactory);
+            var source = new HuobiOrderBookSource(client);
+
+            var orderBook = l2Optimized ?
+                new CryptoOrderBookL2(pair, source) :
+                (ICryptoOrderBook)new CryptoOrderBook(pair, source);
+
+            if (optimized)
+            {
+                ConfigureOptimized(source, orderBook);
+            }
+
+            _ = client.Start();
+
+            // send subscription request to order book data
+            client.Send(new MarketByPriceSubscribeRequest("s1", pair, 20));
+
+            // send request to snapshot
+            client.Send(new MarketByPricePullRequest("p1", pair, 20));
 
             return orderBook;
         }

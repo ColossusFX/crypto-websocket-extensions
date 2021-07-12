@@ -16,10 +16,10 @@
     <RepositoryUrl>https://github.com/Marfusios/crypto-websocket-extensions</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile> 
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyVersion>2.5.0.0</AssemblyVersion>
     <FileVersion>2.5.0.0</FileVersion>
-    
+
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
@@ -29,7 +29,8 @@
     <PackageReference Include="Bitfinex.Client.Websocket" Version="4.1.110" />
     <!--PackageReference Include="Bitmex.Client.Websocket" Version="3.1.78" /-->
     <PackageReference Include="Bitstamp.Client.Websocket" Version="1.0.2" />
-    <!--PackageReference Include="Coinbase.Client.Websocket" Version="2.0.16" /-->
+    <PackageReference Include="Coinbase.Client.Websocket" Version="2.0.16" />
+    <PackageReference Include="Huobi.Client.Websocket" Version="1.0.3" />
     <PackageReference Include="LibLog" Version="5.0.8">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
