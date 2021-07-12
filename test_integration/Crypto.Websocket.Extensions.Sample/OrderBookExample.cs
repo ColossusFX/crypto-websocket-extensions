@@ -65,7 +65,7 @@ namespace Crypto.Websocket.Extensions.Sample
                     binanceOb.BidAskUpdatedStream,
                     coinbaseOb.BidAskUpdatedStream,
                     bitstampOb.BidAskUpdatedStream,
-                    ftxOb.BidAskUpdatedStream
+                    ftxOb.BidAskUpdatedStream,
                     huobiOb.BidAskUpdatedStream
                 })
                 .Subscribe(x => HandleQuoteChanged(x, true));
