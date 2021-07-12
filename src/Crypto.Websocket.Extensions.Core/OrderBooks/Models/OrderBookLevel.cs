@@ -74,6 +74,32 @@ namespace Crypto.Websocket.Extensions.Core.OrderBooks.Models
         public int AmountUpdatedCount { get; internal set; }
 
         /// <summary>
+        /// Difference between previous level amount and current one, negative means that current level amount is smaller than it was before (makes sense for both L3 and L2)
+        /// </summary>
+        public double AmountDifference { get; internal set; }
+
+        /// <summary>
+        /// Difference between first level amount and current one, negative means that current level amount is smaller than it was at the beginning (makes sense for both L3 and L2)
+        /// </summary>
+        public double AmountDifferenceAggregated { get; internal set; }
+
+        /// <summary>
+        /// Difference between previous level order count and current one, negative means that there are fewer orders on that level (makes sense only for L2)
+        /// </summary>
+        public int CountDifference { get; internal set; }
+
+        /// <summary>
+        /// Difference between first level order count and current one, negative means that there are fewer orders on that level than at the beginning (makes sense only for L2)
+        /// </summary>
+        public int CountDifferenceAggregated { get; internal set; }
+
+        /// <summary>
+        /// Level index (position) in the order book.
+        /// Beware not updated after first set! 
+        /// </summary>
+        public int? Index { get; internal set; }
+
+        /// <summary>
         /// Create a new clone
         /// </summary>
         public OrderBookLevel Clone()
@@ -89,7 +115,11 @@ namespace Crypto.Websocket.Extensions.Core.OrderBooks.Models
             {
                 Ordering = Ordering,
                 PriceUpdatedCount = PriceUpdatedCount,
-                AmountUpdatedCount = AmountUpdatedCount
+                AmountUpdatedCount = AmountUpdatedCount,
+                AmountDifference = AmountDifference,
+                CountDifference = CountDifference,
+                AmountDifferenceAggregated = AmountDifferenceAggregated,
+                CountDifferenceAggregated = CountDifferenceAggregated
             };
         }
 
