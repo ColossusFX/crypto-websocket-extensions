@@ -102,7 +102,33 @@ namespace Crypto.Websocket.Extensions.Core.Positions.Models
         /// Unrealized position profit (supported only by few exchanges)
         /// </summary>
         public double? UnrealizedPnl { get; set; }
-
+        /// <summary>
+        /// Amount that was paid to enter this position, equal to size * entry_price. Positive if long, negative if short.
+        /// </summary>
+        public double? Cost { get; set; }
+        /// <summary>
+        /// Cumulative size of all open bids
+        /// </summary>
+        public double? LongOrderSize { get; set; }
+        /// <summary>
+        /// Cumulative size of all open offers
+        /// </summary>
+        public double? ShortOrderSize { get; set; }
+        /// <summary>
+        /// Maximum possible absolute position size if some subset of open orders are filled
+        /// </summary>
+        public double? OpenSize { get; set; }
+        /// <summary>
+        /// Is equal to:
+        /// For PRESIDENT: initialMarginRequirement * openSize * (risk price)
+        /// For MOVE: initialMarginRequirement * openSize * (index price)
+        /// Otherwise: initialMarginRequirement * openSize * (mark price)
+        /// </summary>
+        public double? CollateralUsed { get; set; }
+        /// <summary>
+        /// Current average entry price of open position
+        /// </summary>
+        public double AverageOpenPrice { get; set; }
 
         private double WithCorrectSign(double value)
         {

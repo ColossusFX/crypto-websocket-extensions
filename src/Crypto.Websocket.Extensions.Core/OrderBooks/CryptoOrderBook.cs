@@ -123,7 +123,7 @@ namespace Crypto.Websocket.Extensions.Core.OrderBooks
         public CryptoOrderBookType TargetType { get; }
 
         /// <summary>
-        /// Time interval for auto snapshot reloading.
+        /// NextFundingTime interval for auto snapshot reloading.
         /// Default 1 min. 
         /// </summary>
         public TimeSpan SnapshotReloadTimeout
@@ -151,7 +151,7 @@ namespace Crypto.Websocket.Extensions.Core.OrderBooks
         }
 
         /// <summary>
-        /// Time interval for validity checking.
+        /// NextFundingTime interval for validity checking.
         /// It forces snapshot reloading whenever invalid state. 
         /// Default 5 sec. 
         /// </summary>

@@ -25,17 +25,17 @@ namespace Crypto.Websocket.Extensions.Core.Fundings
         /// <summary>
         /// Indicative funding rate
         /// </summary>
-        public double IndicativeRate { get; set; }
+        public double NextFundingRate { get; set; }
         
         /// <summary>
         /// Indicative funding rate %
         /// </summary>
-        public double IndicativeRatePercent => IndicativeRate * 100;
+        public double IndicativeRatePercent => NextFundingRate * 100;
         
         /// <summary>
         /// Funding period
         /// </summary>
-        public DateTime Time { get; set; }
+        public DateTime NextFundingTime { get; set; }
         
         public DateTime Interval { get; set; }
 
@@ -50,5 +50,7 @@ namespace Crypto.Websocket.Extensions.Core.Fundings
         public double FundingRatePercent { get; set; }
         public double FundingRateDailyPercent { get; set; }
         public double FundingRatePa { get; set; }
+        public decimal Volume { get; set; }
+        public decimal ExpirationPrice { get; set; }
     }
 }

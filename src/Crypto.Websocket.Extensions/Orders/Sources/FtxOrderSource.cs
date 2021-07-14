@@ -129,12 +129,18 @@ namespace Crypto.Websocket.Extensions.Orders.Sources
 
             var amountOrig = Math.Abs(order?.Data.Size ?? 0);
 
-            var currentStatus = existing != null &&
-                                existing.OrderStatus != CryptoOrderStatus.Undefined &&
-                                existing.OrderStatus != CryptoOrderStatus.New &&
-                                order?.Data.Status == OrderStatus.Undefined
-                ? existing.OrderStatus
-                : ConvertOrderStatus(order);
+            //if (order.Data.FilledSize < order.Data.Size)
+            // var currentStatus = existing != null &&
+            //                     existing.OrderStatus != CryptoOrderStatus.Undefined &&
+            //                     existing.OrderStatus != CryptoOrderStatus.New &&
+            //                     order?.Data.Status == OrderStatus.Undefined
+            //     ? existing.OrderStatus
+            //     : ConvertOrderStatus(order);
+
+            var currentStatus = CryptoOrderStatus.Undefined;
+            
+            if (order?.Data.FilledSize < order?.Data.Size)
+                 currentStatus = CryptoOrderStatus.PartiallyFilled;
 
             var newOrder = new CryptoOrder
             {
@@ -145,8 +151,8 @@ namespace Crypto.Websocket.Extensions.Orders.Sources
                 AmountOrig = amountOrig,
                 Side = ConvertSide(order.Data.Side),
                 OrderStatus = ConvertOrderStatus(order),
-                Type = ConvertOrderType(order?.Data.Type ?? OrderType.Undefined),
-                Created = ConvertToDatetime(order?.Data.CreatedAt ?? DateTimeOffset.UtcNow),
+                Type = ConvertOrderType(order.Data.Type),
+                Created = ConvertToDatetime(order.Data.CreatedAt),
                 ClientId = clientId
             };
 
@@ -158,7 +164,7 @@ namespace Crypto.Websocket.Extensions.Orders.Sources
 
             return newOrder;
         }
-        
+
         private CryptoOrder ConvertFill(FillsResponse order)
         {
             var id = order?.Data.Id.ToString() ?? "00000";

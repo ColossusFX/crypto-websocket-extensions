@@ -28,7 +28,7 @@ namespace Crypto.Websocket.Extensions.Core.OrderBooks.Sources
         bool BufferEnabled { get; set; }
 
         /// <summary>
-        /// Time interval for buffering received order book data updates.
+        /// NextFundingTime interval for buffering received order book data updates.
         /// Higher it for data intensive sources (Bitmex, etc.)
         /// Lower - more realtime data, high CPU load.
         /// Higher - less realtime data, less CPU intensive. 
